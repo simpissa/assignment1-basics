@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Optional
 import pickle
 import math
 import regex as re
@@ -29,7 +29,7 @@ class Tokenizer:
         cls, 
         vocab_filepath: str,
         merges_filepath: str,
-        special_tokens: list[str] | None = None
+        special_tokens: Optional[list[str]] = None
     ):
         with open(vocab_filepath, "rb") as f:
             vocab = pickle.load(f)
