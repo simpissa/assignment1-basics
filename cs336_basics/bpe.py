@@ -3,6 +3,7 @@ from typing import Tuple, BinaryIO, Any
 from multiprocessing import cpu_count, Pool
 from functools import reduce, partial
 import heapq
+import pickle
 
 import regex as re
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
@@ -230,9 +231,11 @@ class BPE:
 if __name__ == "__main__":
     bpe = BPE()
     vocab, merges = bpe.train_bpe(
-        "test.txt", 
-        261, 
+        "data/TinyStoriesV2-GPT4-valid.txt", 
+        10000, 
         ["<|endoftext|>"],
     )
-    print(vocab)
-    print(merges)
+    print(len(merges))
+    tokenizer = {"vocab": vocab, "merges": merges}
+    # with open("tokenizer/tokenizer.pkl", "wb") as f:
+    #     pickle.dump(tokenizer, f)

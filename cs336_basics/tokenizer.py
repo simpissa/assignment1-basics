@@ -2,6 +2,7 @@ from typing import Iterable, Optional
 import pickle
 import math
 import regex as re
+import numpy as np
 
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 
@@ -91,8 +92,12 @@ class Tokenizer:
 if __name__ == "__main__":
     from bpe import BPE
     bpe = BPE()
-    vocab, merges = bpe.train_bpe("test.txt", 261, ["<|endoftext|>"])
-    t = Tokenizer(vocab, merges, ["<|endoftext|>", "<|endoftext|>""<|endoftext|>"])
-    ids = t.encode("Hello, how <|endoftext|><|endoftext|> are you?<|endoftext|>")
-    print(ids)  
-    print(t.decode(ids))
+    # vocab, merges = bpe.train_bpe("test.txt", 261, ["<|endoftext|>"])
+    with open("tokenizer/tokenizer.pkl", "rb") as f:
+        obj = pickle.load(f)
+    vocab = obj["vocab"] 
+    merges = obj["merges"]
+    t = Tokenizer(vocab, merges, ["<|endoftext|>"])
+    with open("data/TinyStoriesV2-GPT4-valid.txt") as f:
+        ids = np.array(t.encode(f.read()), dtype=np.long)
+    np.save("tokenizer/tokenized_data.npy", ids)

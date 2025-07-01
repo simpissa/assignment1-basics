@@ -14,7 +14,8 @@ class Linear(nn.Module):
     ):
         super().__init__()
         self.weight = nn.Parameter(torch.empty((out_features, in_features), device=device, dtype=dtype))
-        std = torch.sqrt(torch.tensor(2 / (in_features + out_features)))
+        # std = torch.sqrt(torch.tensor(2 / (in_features + out_features)))
+        std = math.sqrt(2 / (in_features + out_features))
         torch.nn.init.trunc_normal_(self.weight, mean=0, std=std, a=-3*std, b=3*std)
         
     def forward(
@@ -164,6 +165,7 @@ class MultiHeadSelfAttention(nn.Module):
         self.v_proj = Linear(d_model, d_model, device=device)
         self.output_proj = Linear(d_model, d_model, device=device)
         self.rope = rope
+        self.device = device
     def forward(
         self,
         x: torch.Tensor,
@@ -186,7 +188,7 @@ class MultiHeadSelfAttention(nn.Module):
         if token_positions is not None:
             q = self.rope.forward(q, token_positions)
             k = self.rope.forward(k, token_positions)
-        mask = torch.tril(torch.ones(seq_len, seq_len))
+        mask = torch.tril(torch.ones(seq_len, seq_len, device=self.device))
         output = rearrange(Attention(q, k, v, mask), "... num_heads sequence d_v -> ... sequence (num_heads d_v)")
         
         # output = einsum(self.output_proj, output, "... d_model hd_v, ... sequence hd_v -> ... sequence d_model")
@@ -206,8 +208,8 @@ class TransformerBlock(nn.Module):
         super().__init__()
         self.attn = MultiHeadSelfAttention(d_model, num_heads, rope, device=device)
         self.ffn = SwiGLU(d_model, d_ff, device=device)
-        self.ln1 = RMSNorm(d_model)
-        self.ln2 = RMSNorm(d_model)
+        self.ln1 = RMSNorm(d_model, device=device)
+        self.ln2 = RMSNorm(d_model, device=device)
 
     def forward(
         self,
@@ -242,7 +244,7 @@ class Transformer(nn.Module):
         self,
         x: torch.Tensor
     ) -> torch.Tensor:
-        x = x[..., :self.context_length, :]
+        x = x[..., :self.context_length]
         
         x = self.token_embeddings(x)
         for layer in self.layers:
